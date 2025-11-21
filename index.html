@@ -1,51 +1,609 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UPI QR Generator</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-  body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
-  .box { max-width:420px; margin:auto; background:white; padding:25px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.15); animation:fade 0.4s ease; }
-  input { width:100%; padding:10px; margin:8px 0; border-radius:6px; border:1px solid #ccc; }
-  button { width:100%; padding:12px; background:#0077ff; border:none; color:white; border-radius:6px; font-size:16px; cursor:pointer; }
-  #qrcode { margin-top:20px; display:flex; justify-content:center; align-items:center; padding:20px; background:#f0f8ff; border-radius:12px; box-shadow:0 0 12px rgba(0,0,0,0.12); }
-  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AV+ Store | Modern Sports E-Commerce</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- QR Code JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0055FF', // Deep Electric Blue
+                        primaryDark: '#0044CC',
+                        accent: '#FF6600', // Vibrant Orange
+                        neutral: {
+                            50: '#F9FAFB',
+                            100: '#F3F4F6',
+                            800: '#1F2937',
+                            900: '#111827',
+                        },
+                        success: '#84CC16', // Lime
+                        error: '#DC2626', // Crimson
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.3s ease-out forwards',
+                        'bounce-small': 'bounceSmall 0.3s infinite alternate',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        'scan': 'scan 2s linear infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(0)' },
+                        },
+                        bounceSmall: {
+                            'from': { transform: 'translateY(0)' },
+                            'to': { transform: 'translateY(-4px)' },
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.9)' },
+                            '50%': { transform: 'scale(1.1)' },
+                            '100%': { transform: 'scale(1)' },
+                        },
+                        scan: {
+                            '0%': { top: '0%' },
+                            '50%': { top: '100%' },
+                            '100%': { top: '0%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Hide scrollbar for clean horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+        }
+        
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
 </head>
-<body>
-<div class="box">
-  <h2>UPI QR Generator</h2>
-  <label>Receiver UPI ID</label>
-  <input id="upi" value="sanger1@ptaxis" />
+<body class="bg-neutral-50 text-neutral-900 font-sans antialiased selection:bg-primary selection:text-white">
+    <div id="root"></div>
+    <canvas id="confetti-canvas"></canvas>
 
-  <label>Amount</label>
-  <input id="amt" placeholder="Enter amount" type="number" />
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
 
-  <button onclick="makeQR()">Generate QR</button>
+        // --- SEED DATA (UPDATED PRICE TO 1) ---
+        const SEED_DATA = [
+            {"id":"sku-001","title":"ProMatch Soccer Ball (Size 5)","category":"Soccer","brand":"Velocity","price":1.00,"currency":"INR","rating":4.6,"reviews":128,"stock":120,"images":["https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?auto=format&fit=crop&w=800&q=80","https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=80"],"description":"Durable 32-panel soccer ball, machine stitched, professional bounce."},
+            {"id":"sku-002","title":"AeroRun Lightweight Running Shoes","category":"Running","brand":"AeroFit","price":1.00,"currency":"INR","rating":4.4,"reviews":256,"stock":45,"images":["https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80","https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=800&q=80"],"description":"Breathable, cushioned midsole with carbon-fiber-like responsiveness."},
+            {"id":"sku-003","title":"PowerStrike Cricket Bat - Willow Pro","category":"Cricket","brand":"PowerStrike","price":1.00,"currency":"INR","rating":4.8,"reviews":64,"stock":12,"images":["https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=80","https://images.unsplash.com/photo-1593766825432-35b5a965d1e4?auto=format&fit=crop&w=800&q=80"],"description":"English willow, full spine, balanced for power and control."},
+            {"id":"sku-004","title":"GripMaster Gym Gloves","category":"Fitness","brand":"GripMaster","price":1.00,"currency":"INR","rating":4.2,"reviews":33,"stock":200,"images":["https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=800&q=80"],"description":"Anti-slip, breathable, reinforced palm for weightlifting."},
+            {"id":"sku-005","title":"ZenFlow Yoga Mat 6mm","category":"Yoga","brand":"ZenFlow","price":1.00,"currency":"INR","rating":4.5,"reviews":98,"stock":150,"images":["https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=800&q=80"],"description":"Eco-friendly TPE, non-slip, shock absorbent."},
+            {"id":"sku-006","title":"Velocity Road Helmet","category":"Cycling","brand":"Velocity","price":1.00,"currency":"INR","rating":4.3,"reviews":42,"stock":60,"images":["https://images.unsplash.com/photo-1564675401143-a16708563213?auto=format&fit=crop&w=800&q=80"],"description":"Aerodynamic, MIPS-ready shell with adjustable fit."},
+            {"id":"sku-007","title":"ProBlend Whey Protein 2kg","category":"Nutrition","brand":"NutriPro","price":1.00,"currency":"INR","rating":4.1,"reviews":210,"stock":80,"images":["https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=800&q=80"],"description":"30g protein per scoop, rapid absorption, multiple flavors."}
+        ];
 
-  <div id="qrcode"></div>
-  <button id="upiBtn" style="margin-top:10px; display:none; padding:12px; background:#28a745; border:none; color:white; border-radius:6px; font-size:16px; cursor:pointer;">Pay using UPI App</button>
+        // --- ICONS ---
+        const Icons = {
+            Search: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
+            ShoppingBag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>,
+            Heart: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={props.filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>,
+            User: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Star: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={props.filled ? "#FFB000" : "none"} stroke={props.filled ? "#FFB000" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+            ShieldCheck: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>,
+            Edit: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+            CreditCard: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>,
+            Truck: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><line x1="16" y1="8" x2="20.18" y2="8"></line><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle><path d="M16 16h4.2a2 2 0 0 0 1.8-1.1l1.6-3.3a1 1 0 0 0 .1-.6V8a2 2 0 0 0-2-2h-5"></path></svg>,
+            QrCode: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>,
+            Smartphone: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>,
+            Bank: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="3" y1="21" x2="21" y2="21"></line><line x1="5" y1="21" x2="5" y2="10"></line><line x1="19" y1="21" x2="19" y2="10"></line><path d="M2 10h20"></path><path d="M12 3a9 9 0 0 0-9 7h18a9 9 0 0 0-9-7z"></path></svg>
+        };
 
-</div>
+        // --- UTILITIES ---
+        const formatPrice = (price, currency = 'INR') => {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency, minimumFractionDigits: 2 }).format(price);
+        };
 
-<script>
-function makeQR(){
-  const upi = document.getElementById("upi").value.trim();
-  const amt = document.getElementById("amt").value.trim();
+        const triggerConfetti = () => {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const colors = ['#0055FF', '#FF6600', '#84CC16', '#ffffff'];
+            
+            for(let i=0; i<150; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    size: Math.random() * 8 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100
+                });
+            }
 
-  if(!upi || !amt){ alert("Enter UPI ID and Amount"); return; }
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    if(p.life > 0) {
+                        active = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.2;
+                        p.life--;
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    }
+                });
+                if(active) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        };
 
-  const payload = `upi://pay?pa=${upi}&pn=Receiver&am=${amt}&cu=INR`;
+        // --- COMPONENTS ---
 
-  document.getElementById("qrcode").innerHTML = "";
-  new QRCode(document.getElementById("qrcode"), payload);
+        const ModeToggle = ({ isAdmin, toggleAdmin }) => (
+            <div className="flex bg-neutral-100 rounded-full p-1 relative border border-neutral-200">
+                <div className={`absolute top-1 bottom-1 w-[50%] bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out ${isAdmin ? 'translate-x-[96%]' : 'translate-x-0'}`}></div>
+                <button onClick={() => toggleAdmin(false)} className={`relative z-10 px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full transition-colors duration-200 ${!isAdmin ? 'text-primary' : 'text-neutral-500'}`}>User</button>
+                <button onClick={() => toggleAdmin(true)} className={`relative z-10 px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full transition-colors duration-200 ${isAdmin ? 'text-accent' : 'text-neutral-500'}`}>Admin</button>
+            </div>
+        );
 
-  const upiBtn = document.getElementById("upiBtn");
-  upiBtn.style.display = "block";
-  upiBtn.onclick = () => { window.location.href = payload; };
-}
-</script>
+        // FIXED NAVBAR: No fixed height, stacks correctly
+        const Navbar = ({ cartCount, openCart, isAdmin, toggleAdmin, setView, view }) => {
+            const [search, setSearch] = useState("");
+            const [results, setResults] = useState([]);
+
+            useEffect(() => {
+                if(search.length > 1) {
+                    const filtered = SEED_DATA.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
+                    setResults(filtered);
+                } else {
+                    setResults([]);
+                }
+            }, [search]);
+
+            return (
+                <nav className="sticky top-0 z-50 glass border-b border-neutral-200 flex flex-col transition-all duration-300">
+                    {/* Admin Banner as Separate Block */}
+                    {isAdmin && (
+                        <div className="bg-accent text-white text-[10px] font-bold text-center py-1 tracking-widest w-full">
+                            ADMIN MODE — SANDBOX ACTIVE
+                        </div>
+                    )}
+                    
+                    {/* Main Nav Content */}
+                    <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between py-3 min-h-[64px]">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+                            <div className="w-8 h-8 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded skew-x-[-10deg]">
+                                <span className="skew-x-[10deg]">AV</span>
+                            </div>
+                            <span className="font-display font-bold text-xl tracking-tight hidden sm:block">AV<span className="text-primary">+</span> Store</span>
+                        </div>
+
+                        <div className="hidden md:block relative flex-1 max-w-md mx-4">
+                            <input 
+                                type="text" 
+                                placeholder="Search gear..." 
+                                className="w-full bg-neutral-100 border border-transparent focus:bg-white focus:border-primary rounded-full py-2 pl-10 pr-4 text-sm transition-all outline-none"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                            <Icons.Search className="w-4 h-4 text-neutral-400 absolute left-3 top-2.5" />
+                            {results.length > 0 && (
+                                <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden p-2 animate-fade-in">
+                                    {results.slice(0,4).map(r => (
+                                        <div key={r.id} onClick={() => {setView('product', r); setSearch(''); setResults([])}} className="flex items-center gap-3 p-2 hover:bg-neutral-50 rounded-lg cursor-pointer">
+                                            <img src={r.images[0]} className="w-10 h-10 rounded object-cover" alt={r.title}/>
+                                            <div>
+                                                <div className="text-xs font-bold text-neutral-900">{r.title}</div>
+                                                <div className="text-xs text-neutral-500">{formatPrice(r.price)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <ModeToggle isAdmin={isAdmin} toggleAdmin={toggleAdmin} />
+                            <button className="relative p-2 hover:bg-neutral-100 rounded-full transition-colors group" onClick={openCart}>
+                                <Icons.ShoppingBag className={`w-6 h-6 text-neutral-700 group-hover:text-primary transition-colors`} />
+                                {cartCount > 0 && (
+                                    <span className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full animate-pop">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </button>
+                            <button className="p-2 hover:bg-neutral-100 rounded-full hidden sm:block">
+                                <Icons.User className="w-6 h-6 text-neutral-700" />
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const ProductCard = ({ product, onAdd, onView, isAdmin }) => (
+            <div 
+                className="group relative bg-white rounded-2xl p-3 transition-all duration-300 hover:shadow-xl border border-transparent hover:border-neutral-100 cursor-pointer"
+                style={{ perspective: '1000px' }}
+            >
+                <div 
+                    className="relative rounded-xl overflow-hidden bg-neutral-50 aspect-[4/5] mb-3 transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                    onClick={() => onView(product)}
+                >
+                    <img src={product.images[0]} alt={product.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{product.brand}</div>
+                    {isAdmin && <button className="absolute top-2 right-2 bg-accent text-white p-1.5 rounded-full hover:scale-110 transition-transform z-20 shadow-lg"><Icons.Edit className="w-3 h-3" /></button>}
+                    <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2 bg-gradient-to-t from-black/50 to-transparent pt-10">
+                        <button onClick={(e) => { e.stopPropagation(); onAdd(product); }} className="flex-1 bg-white text-neutral-900 text-xs font-bold py-2 rounded shadow-lg hover:bg-primary hover:text-white transition-colors">ADD TO CART</button>
+                    </div>
+                </div>
+                <div onClick={() => onView(product)}>
+                    <h3 className="font-bold text-neutral-800 text-sm leading-tight mb-1 group-hover:text-primary transition-colors">{product.title}</h3>
+                    <p className="text-xs text-neutral-500 line-clamp-1 mb-2">{product.category}</p>
+                    <div className="flex items-center justify-between mt-1">
+                        <span className="font-display font-bold text-lg text-neutral-900">{formatPrice(product.price)}</span>
+                        <div className="flex items-center gap-1"><Icons.Star className="w-3 h-3" filled={true} /><span className="text-xs font-medium text-neutral-600">{product.rating}</span></div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ProductDetail = ({ product, onBack, onAdd, isAdmin }) => {
+            useEffect(() => { window.scrollTo(0,0); }, []);
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+                    <button onClick={onBack} className="mb-6 text-sm text-neutral-500 hover:text-primary flex items-center gap-1">← Back to browsing</button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="space-y-4">
+                            <div className="aspect-square bg-neutral-100 rounded-2xl overflow-hidden"><img src={product.images[0]} className="w-full h-full object-cover" alt={product.title} /></div>
+                            <div className="grid grid-cols-4 gap-4">{product.images.concat(product.images).slice(0,4).map((img, i) => <div key={i} className="aspect-square rounded-lg overflow-hidden border border-transparent hover:border-primary cursor-pointer"><img src={img} className="w-full h-full object-cover" alt="thumb" /></div>)}</div>
+                        </div>
+                        <div className="flex flex-col justify-center">
+                            {isAdmin && <div className="inline-block bg-accent/10 text-accent text-xs font-bold px-2 py-1 rounded mb-4 self-start">ADMIN EDIT MODE ENABLED</div>}
+                            <div className="flex items-center gap-2 mb-2"><span className="text-primary font-bold text-sm tracking-wider uppercase">{product.brand}</span><span className="w-1 h-1 bg-neutral-300 rounded-full"></span><span className="text-neutral-500 text-sm">{product.category}</span></div>
+                            <h1 className="text-3xl md:text-4xl font-display font-bold text-neutral-900 mb-4 leading-tight">{product.title}</h1>
+                            <div className="flex items-center gap-4 mb-6"><div className="flex text-accent">{[1,2,3,4,5].map(s => <Icons.Star key={s} className="w-5 h-5" filled={s <= Math.round(product.rating)} />)}</div><span className="text-sm text-neutral-500 underline">{product.reviews} Reviews</span></div>
+                            <p className="text-neutral-600 leading-relaxed mb-8 text-lg">{product.description}</p>
+                            <div className="flex items-end gap-4 mb-8"><span className="text-4xl font-display font-bold text-neutral-900">{formatPrice(product.price)}</span><span className="text-sm text-green-600 font-medium mb-2 flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> In Stock</span></div>
+                            <div className="flex gap-4">
+                                <button onClick={() => onAdd(product)} className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:bg-primaryDark transition-transform active:scale-95 shadow-lg shadow-primary/30 flex items-center justify-center gap-2"><Icons.ShoppingBag className="w-5 h-5" /> ADD TO CART</button>
+                                <button className="p-4 border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-colors"><Icons.Heart className="w-6 h-6 text-neutral-400 hover:text-red-500" /></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const CartDrawer = ({ isOpen, onClose, cart, updateQty, checkout }) => {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[100]">
+                    <div className="absolute inset-0 bg-neutral-900/20 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+                    <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl p-6 flex flex-col animate-slide-in-right">
+                        <div className="flex items-center justify-between mb-6"><h2 className="font-display font-bold text-xl">Your Cart ({cart.length})</h2><button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><Icons.X className="w-5 h-5" /></button></div>
+                        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                            {cart.length === 0 ? <div className="text-center py-20 text-neutral-400"><Icons.ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" /><p>Your cart is empty</p></div> : cart.map(item => (
+                                <div key={item.id} className="flex gap-4">
+                                    <div className="w-20 h-20 bg-neutral-100 rounded-lg overflow-hidden flex-shrink-0"><img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" /></div>
+                                    <div className="flex-1"><h4 className="font-bold text-sm text-neutral-800 line-clamp-2">{item.title}</h4><p className="text-sm text-neutral-500 mb-2">{item.brand}</p><div className="flex items-center justify-between"><span className="font-medium">{formatPrice(item.price)}</span><div className="flex items-center bg-neutral-50 rounded-md border border-neutral-200"><button onClick={() => updateQty(item.id, -1)} className="px-2 py-1 text-neutral-500 hover:text-neutral-900">-</button><span className="text-xs font-medium px-1">{item.qty}</span><button onClick={() => updateQty(item.id, 1)} className="px-2 py-1 text-neutral-500 hover:text-neutral-900">+</button></div></div></div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="border-t border-neutral-100 pt-6 mt-4">
+                            <div className="flex justify-between mb-4"><span className="text-neutral-500">Subtotal</span><span className="font-bold text-lg">{formatPrice(total)}</span></div>
+                            <button onClick={checkout} disabled={cart.length === 0} className="w-full bg-primary text-white font-bold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primaryDark transition-colors">PROCEED TO CHECKOUT</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // UPDATED: INDIAN STYLE PAYMENT GATEWAY
+        const PaymentGateway = ({ total, onSuccess, onCancel }) => {
+            const [method, setMethod] = useState('upi'); // upi, card, netbanking
+            const [loading, setLoading] = useState(false);
+            const [upiId, setUpiId] = useState('');
+            const qrRef = useRef(null);
+            
+            // Construct Dynamic UPI URL
+            const upiUrl = `upi://pay?pa=sanger1@ptaxis&pn=AVStore&am=${total}&cu=INR`;
+
+            useEffect(() => {
+                if (method === 'upi' && qrRef.current) {
+                    qrRef.current.innerHTML = ''; // Clear previous QR
+                    if (window.QRCode) {
+                        new window.QRCode(qrRef.current, {
+                            text: upiUrl,
+                            width: 180,
+                            height: 180,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : window.QRCode.CorrectLevel.H
+                        });
+                    }
+                }
+            }, [method, total, upiUrl]);
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setTimeout(() => { setLoading(false); onSuccess(); }, 2500);
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] bg-neutral-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row h-[600px] md:h-[500px]">
+                        
+                        {/* Left Panel: Order Summary */}
+                        <div className="w-full md:w-1/3 bg-neutral-50 p-6 border-r border-neutral-100 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-6">
+                                    <div className="w-6 h-6 bg-primary text-white rounded flex items-center justify-center font-bold text-xs">AV</div>
+                                    <span className="font-bold text-neutral-700">AV+ Payments</span>
+                                </div>
+                                <div className="mb-4">
+                                    <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Amount to Pay</p>
+                                    <h2 className="text-3xl font-display font-bold text-neutral-900">{formatPrice(total)}</h2>
+                                </div>
+                                <div className="text-xs text-neutral-400 flex items-center gap-1">
+                                    <Icons.ShieldCheck className="w-3 h-3" /> Secured by 256-bit encryption
+                                </div>
+                            </div>
+                            <div className="space-y-3 mt-6 md:mt-0">
+                                <button onClick={() => setMethod('upi')} className={`w-full text-left p-3 rounded-lg flex items-center gap-3 text-sm font-medium transition-all ${method === 'upi' ? 'bg-white shadow-md border-primary border text-primary' : 'hover:bg-white hover:shadow-sm text-neutral-600'}`}>
+                                    <Icons.QrCode className="w-5 h-5" /> UPI / QR
+                                </button>
+                                <button onClick={() => setMethod('card')} className={`w-full text-left p-3 rounded-lg flex items-center gap-3 text-sm font-medium transition-all ${method === 'card' ? 'bg-white shadow-md border-primary border text-primary' : 'hover:bg-white hover:shadow-sm text-neutral-600'}`}>
+                                    <Icons.CreditCard className="w-5 h-5" /> Cards
+                                </button>
+                                <button onClick={() => setMethod('netbanking')} className={`w-full text-left p-3 rounded-lg flex items-center gap-3 text-sm font-medium transition-all ${method === 'netbanking' ? 'bg-white shadow-md border-primary border text-primary' : 'hover:bg-white hover:shadow-sm text-neutral-600'}`}>
+                                    <Icons.Bank className="w-5 h-5" /> NetBanking
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Right Panel: Interaction */}
+                        <div className="flex-1 p-8 relative">
+                            <button onClick={onCancel} className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-800"><Icons.X className="w-5 h-5" /></button>
+                            
+                            <div className="h-full flex flex-col justify-center">
+                                {method === 'upi' && (
+                                    <div className="text-center animate-fade-in">
+                                        <h3 className="font-bold text-lg mb-4">Scan QR to Pay</h3>
+                                        
+                                        <div className="mx-auto w-fit bg-white p-3 border-2 border-neutral-900 rounded-xl mb-4 shadow-sm relative group">
+                                            {/* Generated QR Container */}
+                                            <div ref={qrRef}></div>
+                                            <div className="absolute inset-0 bg-primary/5 border-b-2 border-primary animate-scan pointer-events-none"></div>
+                                        </div>
+
+                                        <a href={upiUrl} className="inline-flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full font-bold text-sm mb-6 hover:bg-primaryDark transition-all shadow-lg shadow-primary/30 hover:-translate-y-0.5">
+                                            <Icons.Smartphone className="w-4 h-4" />
+                                            Open UPI App
+                                        </a>
+
+                                        <div className="flex items-center justify-center gap-2 mb-4 text-neutral-500 text-sm">
+                                            <span className="w-8 h-1 bg-neutral-200 rounded-full"></span> OR <span className="w-8 h-1 bg-neutral-200 rounded-full"></span>
+                                        </div>
+                                        <form onSubmit={handleSubmit} className="flex gap-2">
+                                            <input type="text" placeholder="Enter UPI ID (e.g. user@oksbi)" className="flex-1 border border-neutral-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-primary" required value={upiId} onChange={e => setUpiId(e.target.value)} />
+                                            <button type="submit" disabled={loading} className="bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-black disabled:opacity-50">{loading ? '...' : 'Verify'}</button>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {method === 'card' && (
+                                    <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in max-w-xs mx-auto">
+                                        <h3 className="font-bold text-lg mb-2">Enter Card Details</h3>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-neutral-500 uppercase">Card Number</label>
+                                            <div className="relative">
+                                                <Icons.CreditCard className="absolute left-3 top-3 w-4 h-4 text-neutral-400" />
+                                                <input type="text" placeholder="0000 0000 0000 0000" className="w-full border border-neutral-300 rounded-lg py-2.5 pl-9 pr-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" required />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-neutral-500 uppercase">Valid Thru</label>
+                                                <input type="text" placeholder="MM/YY" className="w-full border border-neutral-300 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-primary" required />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-neutral-500 uppercase">CVV</label>
+                                                <input type="password" placeholder="123" maxLength="3" className="w-full border border-neutral-300 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-primary" required />
+                                            </div>
+                                        </div>
+                                        <button type="submit" disabled={loading} className="w-full bg-primary text-white py-3 rounded-lg font-bold shadow-lg shadow-primary/30 hover:bg-primaryDark transition-all mt-4 flex justify-center">
+                                            {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : `Pay ${formatPrice(total)}`}
+                                        </button>
+                                    </form>
+                                )}
+
+                                {method === 'netbanking' && (
+                                    <div className="animate-fade-in">
+                                        <h3 className="font-bold text-lg mb-4">Select Bank</h3>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {['HDFC', 'SBI', 'ICICI', 'Axis', 'Kotak', 'Yes'].map(bank => (
+                                                <button key={bank} type="button" onClick={handleSubmit} className="border border-neutral-200 p-3 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-sm font-medium text-center">
+                                                    {bank}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('home'); 
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
+            const [selectedProduct, setSelectedProduct] = useState(null);
+            const [showPayment, setShowPayment] = useState(false);
+
+            useEffect(() => {
+                const savedAdmin = localStorage.getItem('av_admin_mode') === 'true';
+                setIsAdmin(savedAdmin);
+            }, []);
+
+            const toggleAdmin = (val) => {
+                setIsAdmin(val);
+                localStorage.setItem('av_admin_mode', val);
+            };
+
+            const addToCart = (product) => {
+                setCart(prev => {
+                    const exists = prev.find(i => i.id === product.id);
+                    if (exists) return prev.map(i => i.id === product.id ? {...i, qty: i.qty + 1} : i);
+                    return [...prev, {...product, qty: 1}];
+                });
+                setIsCartOpen(true);
+            };
+
+            const updateCartQty = (id, delta) => {
+                setCart(prev => prev.map(item => item.id === id ? {...item, qty: Math.max(0, item.qty + delta)} : item).filter(item => item.qty > 0));
+            };
+
+            const handleProductView = (p) => { setSelectedProduct(p); setView('product'); };
+            const handleCheckout = () => { setIsCartOpen(false); setShowPayment(true); };
+            const handlePaymentSuccess = () => { setShowPayment(false); setCart([]); setView('success'); triggerConfetti(); window.scrollTo(0,0); };
+
+            // DYNAMIC STICKY OFFSET CALCULATION
+            // Navbar is sticky. In Admin mode, it's taller due to banner.
+            // We set the filter bar's top position to match the header height.
+            // Admin Banner (24px) + Nav (64px) = ~88px. User Mode = 64px.
+            const stickyTopClass = isAdmin ? 'top-[88px]' : 'top-[64px]';
+
+            return (
+                <div className={`min-h-screen flex flex-col ${isAdmin ? 'border-t-4 border-accent' : ''}`}>
+                    <Navbar cartCount={cart.reduce((a,b) => a + b.qty, 0)} openCart={() => setIsCartOpen(true)} isAdmin={isAdmin} toggleAdmin={toggleAdmin} setView={setView} view={view} />
+
+                    <main className="flex-1 bg-neutral-50/50">
+                        {view === 'home' && (
+                            <div className="max-w-7xl mx-auto px-4 py-8 animate-slide-up">
+                                <div className={`rounded-3xl p-8 mb-12 flex items-center justify-between relative overflow-hidden ${isAdmin ? 'bg-neutral-800' : 'bg-primary'}`}>
+                                    <div className="relative z-10 text-white max-w-lg">
+                                        <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-bold uppercase tracking-wider mb-4">{isAdmin ? 'Admin Dashboard' : 'Summer Collection 2025'}</span>
+                                        <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">{isAdmin ? 'Manage Your Inventory' : 'Level Up Your Game'}</h1>
+                                        <p className="opacity-90 mb-6">{isAdmin ? 'You are currently in sandbox mode. Changes here will persist locally.' : 'Premium gear for elite athletes. Free shipping on orders over ₹500.'}</p>
+                                        {!isAdmin && <button className="bg-white text-primary font-bold px-6 py-3 rounded-full hover:bg-neutral-100 transition-colors">Shop Now</button>}
+                                    </div>
+                                    <div className="absolute right-0 top-0 h-full w-1/2 opacity-20 pointer-events-none">
+                                        <div className="absolute right-10 top-10 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
+                                        <div className="absolute right-40 bottom-10 w-32 h-32 bg-accent rounded-full filter blur-2xl"></div>
+                                    </div>
+                                </div>
+
+                                {/* FIXED FILTER BAR GAP: Uses dynamic inline style for perfect sticky positioning */}
+                                <div 
+                                    className={`flex flex-wrap gap-4 mb-8 items-center justify-between sticky z-30 bg-neutral-50/95 backdrop-blur py-2 transition-all duration-300`}
+                                    style={{ top: isAdmin ? '88px' : '64px' }}
+                                >
+                                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                                        {['All Sports', 'Soccer', 'Running', 'Cricket', 'Fitness', 'Yoga'].map((cat, i) => (
+                                            <button key={cat} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${i === 0 ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 hover:border-neutral-400 text-neutral-600'}`}>{cat}</button>
+                                        ))}
+                                    </div>
+                                    <select className="bg-white border border-neutral-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary">
+                                        <option>Sort by: Featured</option>
+                                        <option>Price: Low to High</option>
+                                        <option>Price: High to Low</option>
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {SEED_DATA.map(product => <ProductCard key={product.id} product={product} onAdd={addToCart} onView={handleProductView} isAdmin={isAdmin} />)}
+                                </div>
+                                {isAdmin && <button className="fixed bottom-8 right-8 w-14 h-14 bg-accent text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-40 font-bold text-2xl pb-1">+</button>}
+                            </div>
+                        )}
+
+                        {view === 'product' && selectedProduct && <ProductDetail product={selectedProduct} onBack={() => setView('home')} onAdd={addToCart} isAdmin={isAdmin} />}
+
+                        {view === 'success' && (
+                            <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-4 animate-slide-up">
+                                <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6"><Icons.ShieldCheck className="w-12 h-12" /></div>
+                                <h1 className="text-4xl font-display font-bold mb-2">Order Confirmed!</h1>
+                                <p className="text-neutral-500 max-w-md mb-8">Thank you for your purchase. We've sent a confirmation email to you.</p>
+                                <button onClick={() => setView('home')} className="bg-neutral-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-neutral-800 transition-colors">Continue Shopping</button>
+                            </div>
+                        )}
+                    </main>
+
+                    <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cart={cart} updateQty={updateCartQty} checkout={handleCheckout} />
+                    {showPayment && <PaymentGateway total={cart.reduce((s, i) => s + (i.price * i.qty), 0)} onSuccess={handlePaymentSuccess} onCancel={() => setShowPayment(false)} />}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
