@@ -23,7 +23,7 @@ This setup allows for rapid prototyping and easy sharing of a complex, interacti
 
 ## System Diagram
 ```mermaid
-graph TD
+flowchart TD
     A[User Browses Products] --> B{Add Item to Cart};
     B --> C[Open Cart Drawer];
     C --> D{Proceed to Checkout};
